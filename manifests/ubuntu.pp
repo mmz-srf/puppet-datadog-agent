@@ -15,7 +15,7 @@
 class datadog_agent::ubuntu(
   $apt_key = 'A2923DFF56EDA6E76E55E492D3A80E30382E94DE',
   $agent_version = 'latest',
-  $other_keys = ['A2923DFF56EDA6E76E55E492D3A80E30382E94DE'],
+  $other_keys = [],
   $location = 'https://apt.datadoghq.com',
   $release = 'stable',
   $repos = 'main',
@@ -32,24 +32,6 @@ class datadog_agent::ubuntu(
     }
   }
 
-  # This is a hack - I'm not happy about it, but we should rarely
-  # hit this code path
-  #
-  # Also, using $::apt_agent6_beta_repo to access fact instead of
-  # $facts hash - for compatibility with puppet3.x default behavior
-  if $::apt_agent6_beta_repo and $agent_version == 'latest' {
-    exec { 'datadog_apt-get_remove_agent6':
-      command     => '/usr/bin/apt-get remove -y -q datadog-agent',
-    }
-  } else {
-    exec { 'datadog_apt-get_remove_agent6':
-      command     => ':',  # NOOP builtin
-      noop        => true,
-      refreshonly => true,
-      provider    => 'shell',
-    }
-  }
-
   if $::apt_agent6_beta_repo {
     file { '/etc/apt/sources.list.d/datadog-beta.list':
       ensure => absent,
@@ -61,8 +43,7 @@ class datadog_agent::ubuntu(
     owner   => 'root',
     group   => 'root',
     content => template('datadog_agent/datadog.list.erb'),
-    notify  => [Exec['datadog_apt-get_remove_agent6'],
-                Exec['datadog_apt-get_update']],
+    notify  => [Exec['datadog_apt-get_update']],
     require => Package['apt-transport-https'],
   }
 
