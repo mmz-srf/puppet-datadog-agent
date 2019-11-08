@@ -1,4 +1,4 @@
-# Class: datadog::reports
+# Class: datadog_agent::reports
 #
 # This class configures the puppetmaster for reporting back to
 # the datadog service.
@@ -13,48 +13,45 @@
 #
 # Sample Usage:
 #
-class datadog::reports (
+class datadog_agent::reports(
   $api_key,
+  $puppet_gem_provider,
   $puppetmaster_user,
-  $puppetmaster_report_host_filter) {
-  include datadog::params
-  $rubygems_package = $datadog::params::rubygems_package
-  $rubydev_package  = $datadog::params::rubydev_package
+  $dogapi_version,
+  $hostname_extraction_regex = nil
+) {
 
-  # check to make sure that you're not installing rubygems somewhere else,
-  # and install it if it's not defined elsewhere in your puppet catalog
-  if defined(Package[$rubygems_package]) {
-    # pass
-    # puppet DSL lacks a 'not' in < 2.6.8
-  } else {
-    package { "$rubygems_package":
-      ensure => installed,
-      before => Package['dogapi'],
-    }
-  }
+  include datadog_agent
+  include datadog_agent::params
+  $rubydev_package = $datadog_agent::params::rubydev_package
 
   # check to make sure that you're not installing rubydev somewhere else
-  if defined(Package[$rubydev_package]) {
-    # pass
-    # puppet DSL lacks a 'not' in < 2.6.8
-  } else {
-    package { "$rubydev_package":
+  if ! defined(Package[$rubydev_package]) {
+    package {$rubydev_package:
       ensure => installed,
-      before => Package['dogapi'],
+      before => Package['dogapi']
     }
   }
 
-  file { "/etc/dd-agent/datadog.yaml":
+  if (! defined(Package['rubygems'])) {
+    # Ensure rubygems is installed
+    class { 'ruby':
+      rubygems_update => false
+    }
+  }
+  # TODO upgrade ruby module to a version with parameter rubygems_update
+
+  file { '/etc/datadog-agent/datadog-reports.yaml':
     ensure  => file,
-    content => template("datadog/datadog.yaml.erb"),
+    content => template('datadog_agent/datadog-reports.yaml.erb'),
     owner   => $puppetmaster_user,
-    group   => "root",
-    mode    => 0640,
-    require => File["/etc/dd-agent"],
+    group   => 'root',
+    mode    => '0640',
+    require => File['/etc/datadog-agent'],
   }
 
-  package { 'dogapi':
-    ensure   => 'installed',
-    provider => 'gem',
+  package{'dogapi':
+    ensure   => $dogapi_version,
+    provider => $puppet_gem_provider,
   }
 }

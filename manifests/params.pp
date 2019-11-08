@@ -1,4 +1,4 @@
-# Class: datadog::params
+# Class: datadog_agent::params
 #
 # This class contains the parameters for the Datadog module
 #
@@ -14,28 +14,26 @@
 #
 # Sample Usage:
 #
-class datadog::params {
-  $api_key      = "your API key"
-  $dd_url       = "https://app.datadoghq.com"
-  $conf_dir     = "/etc/dd-agent/conf.d"
-  $dd_user      = "dd-agent"
-  $dd_group     = "root"
-  $service_name = "datadog-agent"
+class datadog_agent::params {
+  $agent6_enable  = false
+  $conf_dir       = '/etc/dd-agent/conf.d'
+  $conf6_dir      = '/etc/datadog-agent/conf.d'
+  $dd_user        = 'dd-agent'
+  $dd_group       = 'root'
+  $dd_groups      = undef
+  $package_name   = 'datadog-agent'
+  $service_name   = 'datadog-agent'
+  $dogapi_version = 'installed'
+  $conf_dir_purge = false
 
-  case $operatingsystem {
-    "Ubuntu","Debian" : {
-      $rubygems_package  = 'rubygems'
+  case $::operatingsystem {
+    'Ubuntu','Debian' : {
       $rubydev_package   =  'ruby-dev'
-      $mysql_int_package = 'python-mysqldb'
     }
-    "RedHat","CentOS","Fedora","Amazon","Scientific" : {
-      $rubygems_package  = 'rubygems'
+    'RedHat','CentOS','Fedora','Amazon','Scientific' : {
       $rubydev_package   = 'ruby-devel'
-      $process_int_package = 'python-psutil'
-      $mysql_int_package = 'MySQL-python'
-      $mongo_int_package = 'python-pymongo'
     }
-    default: { fail("Class[datadog]: Unsupported operatingsystem: ${::operatingsystem}") }
+    default: { fail("Class[datadog_agent]: Unsupported operatingsystem: ${::operatingsystem}") }
   }
 
 }
