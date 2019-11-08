@@ -347,7 +347,7 @@ class datadog_agent(
   }
 
   if $hiera_integrations {
-    $local_integrations = hiera_hash('datadog_agent::integrations', {})
+    $local_integrations = lookup('datadog_agent::integrations', Hash, 'hash', {})
   } else {
     $local_integrations = $integrations
   }
